@@ -1,0 +1,1605 @@
+---
+title: "homework"
+author: "Haowei He"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+ %\VignetteIndexEntry{homework}
+ %\VignetteEngine{knitr::rmarkdown}
+ %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 2021-9-16
+
+## Section 1
+In this section,we use the data set women in R to make a  regression analysis. The first part is the summary of regression results
+
+```{r echo=TRUE,results='hold'}
+fit <- lm(weight ~ height, data=women)
+summary(fit)$coef
+summary(fit)$r.squared
+```
+This is an example of simple linear regression. From the results of regression,we can see the $R^2$ is `r summary(fit)$r.squared`.Besides, the p value is under $10^{-8}$,This means the linear regression is significant.
+
+Then we can get some plots of this regression.
+```{r}
+par(mfrow=c(1,1)) 
+plot(fit)
+```
+  
+  These plots aim to certify the classical hypothesis of linear regression. From the four plots, we can conclude the hypothesis such as normality ,zero-mean,homoscedasticity is satisfied.Besides,there are seldom outliers in the fourth plots. Therefore, this model is suitable to fit the data set.
+
+## Section 2
+
+In this section 2, we are prepared to use some tools in R to make pictures.The following plots demonstrate the curves of norm distribution with different scale parameters.In order to make the plots more vivid,we use different colors to represent different distributions and integrate them in the one axis.
+
+```{r}
+curve(dnorm(x,0,1),-5,5,lty=1,add=F,col="blue")
+curve(dnorm(x,0,2),-5,5,lty=1,add=T,col="red")
+curve(dnorm(x,0,3),-5,5,lty=1,add=T,col="green")
+curve(dnorm(x,0,4),-5,5,lty=1,add=T,col="orange")
+#legend("topleft", inset=0.01, title="norm curve", c("N(0,1)","N(0,2)","N(0,3)","N(0,4)"),lty=c(1, 2), pch=c(15, 17), col=c("blue", "red","green","orange"))
+```
+
+## Section 3
+
+  In this section,we use some functions in package kableExtra to make some tables.
+  
+  In the first R code part,we use the function kable() and data set 'mtcars' directly to make a table. 
+  
+```{r, results='asis', message=TRUE, echo=TRUE}
+library(kableExtra)
+library(plyr)
+table1<-kable(head(mtcars))
+print(table1)
+```
+##
+ For this part,although we generate a table about the head of mtcars, we can easily find the table is not elegant enough.The layout of this table is pretty muddled.In this way, we ought to improve the complexity of the code part to make a more elegant table.  
+```{r, results='asis', message=TRUE, echo=TRUE}
+x_html <- knitr:: kable(head(mtcars), "html")#generating a table of the head of mtcars.
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = FALSE,font_size=15)#set the size of words in the table
+```
+  except for adjusting the font_size of words,we can also use some colors in the table to make some data more striking.
+```{r, results='asis', message=TRUE, echo=TRUE}
+library(RColorBrewer)
+library(kableExtra)
+n <- 9
+mycolors <- brewer.pal(n, "Set1")#use the function of brewer.pal to return a vector with ten different colors,each color is represented by a number with Hexadecimal.
+head(mtcars)%>%
+kable()%>% 
+kable_styling("hover", full_width = T,font_size=15) %>%# set the size of words in the table.
+column_spec(3:5, bold = T,color = "#E41A1C", background ="#FFFF33") %>%#chose the  three to five columns to add the colors of words and background.the parameter color represents the color of words. 
+row_spec(5:6, bold = T, color = "#A65628", background ="#999999")#chose the  five to six columns to add the colors of words and background.
+```
+
+# 2021-9-23
+
+## Question
+Exercises 3.4,3.11 and 3.20(pages94-96,Statistical Computating with R).
+
+## Answer
+3.4: 
+The question 3.4 aims to Develop an algorithm to generate random samples from a Rayleigh(σ)distribution.Because the Rayleigh(σ) is a continuous function,the density function is   $$f(x)=\frac{x}{\sigma^2}\exp{-\frac{x^2}{2\sigma^2}}\qquad x\geq{0}, \sigma\geq{0}$$.
+
+  we can use the inverse transform method to generate random samples.So we can define the inverse function$$f^{-1}(y)=\sqrt{-2\sigma^2\ln{y}}\qquad y>0$$,we can use this inverse it to make a code.  
+  
+```{r,echo=TRUE,results='hide'}
+inverse_function<-function(theta,y)
+{
+  return(sqrt(-2*theta^2*log(y)))
+}
+y<-runif(1000)
+inverse_function(2,y)#theta is 2
+```
+
+So we would only  change the parameter of inverse_function()to get the random samples of Rayleigh distribution with different thetas.
+
+This part aims to compare the histogram of samples and curve of density function.
+
+```{r,echo=TRUE,results='hold'}
+inverse_function<-function(theta,y)
+{
+  return(sqrt(-2*theta^2*log(y)))
+}
+y<-runif(1000)
+rd<-inverse_function(2,y)#the random numbers of Rayleigh distribution,theta equals to 2
+hist(rd,prob=TRUE,col="yellow")#density histogram of sample with theta equals to 2
+x<-seq(0,1,.01)
+curve((x/4)*exp(-x^2/8),col="black",add=TRUE)#density curve of density function of Rayleigh distribution with theta equals to 2
+```
+
+The histogram and density plot suggests that the empirical and theoretical distributions approximately agree.
+
+\
+3.11: 
+The components of the mixture have N(0,1)and N(3,1)distribution s with mixing probabilities p1 and p2=1−p1.This part we aim to generate this mixture function.
+
+```{r,echo=TRUE,results='hold'}
+#set.seed(1234)
+n<-1000
+p1<-0.25
+norm_1<-rnorm(n,0,1)
+norm_2<-rnorm(n,3,1)
+weight<-sample(c(0,1),n,replace=TRUE,prob=c(p1,1-p1))#generate the weight of norm_1 and norm_2.
+mixture<-weight*norm_1+(1-weight)*norm_2#the mixture distribution
+hist(mixture,prob=TRUE,col="yellow")
+lines(density(mixture),col="black",lty=1)
+```
+
+This part is about the histogram of mixture of normal distributions and the density of this mixture distribution.
+
+The next part we would to conjecture about the values of p1 that produce bimodal mixtures.we use a seq(0,1,0.1) to represent p1 to generate the plot
+
+```{r,echo=TRUE,results='hold'}
+#set.seed(1234)
+n<-1000
+norm_1<-rnorm(n,0,1)
+norm_2<-rnorm(n,3,1)
+mixture_function<-function(p1)
+{
+weight<-sample(c(0,1),n,replace=TRUE,prob=c(p1,1-p1))#generate the weight of norm_1 and norm_2.
+mixture<-weight*norm_1+(1-weight)*norm_2#the mixture distribution
+hist(mixture,prob=TRUE,col="yellow")
+lines(density(mixture),col="black",lty=1)
+}
+par(mfrow = c(2, 3))
+i<-1
+p1<-seq(0,1,0.1)
+for(i in 1:11)
+{
+mixture_function(p1[i])
+}
+```
+
+for the 11 plots,we can see when p1 is in the interval of (0.5,0.6),These values produce bimodal mixtures.
+
+\
+3.20
+
+Write a program to simulate a compound Poisson(λ), the function of the compound Poisson(λ) is $$X(t)=\sum_{i=1}^{N{(t)}} Y_{i}$$
+$Y_{i}$ has a gamma distribution,and $N(t)$ is a poisson process,so we would generate the gamma distribution and Poisson process.
+
+```{r,echo=TRUE,results='hold'}
+compound_Poisson_process<-function(lamada,t,shape,rate)#t represents the time of compound Poisson process
+{
+  Poisson_process<-function(lamada,t)
+  {
+    y<-rpois(1,t*lamada)
+    return(y)
+  }
+  u<-rgamma(Poisson_process(lamada,t),shape,rate)
+  return(sum(u))#sum(u)represents sum of random variables
+}
+results<-replicate(30000,compound_Poisson_process(2,10,4,5))
+x1<-mean(results)
+y1<-var(results)
+print(c(x1,y1))
+```
+
+This code mode simulates a compound Poisson(λ)–Gamma process,we define $$λ=2,t=10,shape=4,rate=5$$In order to get a precise result,we process simulations for 30000 times.The mean of the simulations is `r x1`,and the sample variance of simulations is `r y1`.
+
+because $$E[X(t)]=λ(t)E(Y_{1})\quad Var[X(t)]=λ(t)E({Y_{1}}^2)$$
+
+for$λ=2,t=10,shape=4,rate=5$ we can calculate the  $$E[X(t)]=16\quad Var[X(t)]=16$$, `r x1` and `r y1` is approximately equal to them respectively.
+
+
+# 2021-9-30
+
+
+## Question
+Exercises 5.4,5.9，5.13，and 5.14(pages149-151,Statistical Computating with R).
+
+## Answers
+
+\
+5.4:
+\
+  This question aims to Write a function to compute a Monte Carlo estimate of the Beta(3,3) cdf, so we should generate a large quantity of  random numbers of the Beta(3,3), and then create a empirical distribution of the Beta(3,3). using this empirical distribution to estimate the cdf.
+  
+```{r,echo=TRUE,results='hold'}
+beta_rd<-function(N,shape,rate)#use the random numbers of gamma distributions to generate the random numbers of beta distribution.
+{
+  set.seed(1234)
+  u<-rgamma(N,shape,rate)
+  v<-rgamma(N,shape,rate)
+  rd<-u/(u+v)
+}
+empirical_beta<-function(x,N)
+{
+  u<-beta_rd(N,3,3)
+  v<-as.integer(u<x)
+  return(sum(v)/N)
+}
+X<-seq(0,1,0.1)
+u<-numeric(length(X))
+for(i in 1:length(X))
+{
+u[i]<-empirical_beta(X[i],100000)
+}
+F<-pbeta(X,3,3)
+Fn<-u
+library(kableExtra)
+x_html <- knitr::kable((rbind(X,Fn,F)),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=12)#set the size of words in the table
+#data.frame('x'=X,'Fn'=u,'F'=pbeta(X,3,3))
+```
+
+In this part of code, the empirical_beta represents the empirical function of beta distribution, we use 100000 random numbers of beta(3,3) to genrate this empirical function.Compared with the cdf of Beta distribution, we can conclude that the value of two functions is approximately equal.
+
+\
+5.9
+\
+This questions aim to implement a function to generate samples from a Rayleigh(σ)distribution,using antithetic variables.
+
+In this situation, we can use the inverse transformation method to generate random numbers of Rayleigh(σ)distribution.
+
+Rayleigh(σ) is a continuous function,the density function is  $$f(x)=\frac{x}{\sigma^2}\exp{-\frac{x^2}{2\sigma^2}}\qquad x\geq{0}, \sigma\geq{0}\qquad.$$
+
+So we can define the inverse function as$$f^{-1}(y)=\sqrt{-2\sigma^2\ln{(1-y)}}\qquad y>0\qquad.$$
+```{r,echo=TRUE}
+anti <- function(N,sigma,antithetic = TRUE) 
+  {
+  #set.seed(1234)
+  v <- runif(N)#using antithetic method
+  if (!antithetic)
+  {
+  u <- runif(N)
+  Y1<- sqrt(-2*sigma^2*log(1-v))#inverse function method to generate random numbers of Rayleigh(σ)distribution.
+  Y2<- sqrt(-2*sigma^2*log(1-u))
+  Y<-(Y1+Y2)/2
+  }
+  else
+  {
+  u <- 1 - v
+  Y1<- sqrt(-2*sigma^2*log(1-v))#inverse function method to generate random numbers of Rayleigh(σ)distribution.
+  Y2<- sqrt(-2*sigma^2*log(1-u))
+  Y<-(Y1+Y2)/2
+  }
+  return(Y)
+}
+sigma<-seq(1,10,1)
+sd<-numeric(10)
+sd_anti<-numeric(10)
+for(i in 1:10)
+{
+  sd_anti[i]<-sd(anti(10000,sigma[i],TRUE))
+}
+for(j in 1:10)
+{
+  sd[j]<-sd(anti(10000,sigma[j],FALSE))
+}
+reduction<-1-sd_anti/sd
+rbind(sigma,sd,sd_anti,reduction)
+```
+
+  According to the results of antithetic methods,we can see the mean of random numbers is approximately equal.And the percent reduction in variance of$\frac{X+X'}{2}$ compared with $\frac{X_{1}+X_{2}}{2}$ for independent X1,X2 is about 70 percent, so the effect is apparently significant.
+
+5.13 and 5.14
+\
+In this question,we would find two importance functions f1 and f2 that are supported on$(1,\infty)$ and are ‘close’ to g(x),and then we would estimate that$$\int_1^{\infty}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx$$.However,according to property of symmetry of  $f(x)=\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}$ and propriety of pdf,we can conclude that the calculus of           $\int_0^{\infty}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx$ is 0.5,$$\int_1^{\infty}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx=0.5-\int_0^{1}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx$$.we just need to calculate the value of $\int_0^{1}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx$
+
+We choose the $f_{1}=\frac{1}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}$,$f_{2}=\exp{(-x)}$ and $f_{3}=3x^2$ as importance functions.And next plots are curves of these functions in the interval(0,3).
+```{r}
+curve(x^2*exp(-x^2/2)/sqrt(2*pi),0,3,lty=2,add=F,col="blue",main="importance function")
+curve(exp(-x),0,3,lty=2,add=T,col="green")
+curve(exp(-x^2/2)/sqrt(2*pi),0,3,lty=2,add=T,col="red")
+curve(3*x^2,0,3,lty=2,add=T,col="yellow")
+#curve(x^2*exp(-x^2/2)/sqrt(2*pi),0,1,lty=2,add=T,col="blue")
+#legend( "topright",inset=.01, title="importance function", c("f","f1","f2","f3"),lty=c(1, 2), pch=c(15, 17), col=c("blue", "green","red","yellow"))
+```
+
+According to the above pictures,we choose 3 importance functions.in the interval of (0,1),the curve of $f_3=3x^2$ resembles the curve of $f(x)=\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}$ mostly,so we can guess the effect of $f_3$ is best.Then we use these three importance functions to estimate the values and standard error of calculus.
+```{r}
+set.seed(12345)
+m<-10000
+theta.hat<-numeric(4)
+se<-numeric(4)
+f<-function(x)
+{
+  y<-(x^2*exp(-x^2/2)/sqrt(2*pi))*(x>0)*(x<1)
+  return(y)
+}
+
+x<-runif(m)# using f
+f_0<-f(x)#f_0 represents f(x)/1
+theta.hat[1]<-mean(f_0)
+se[1]<-sd(f_0)
+
+x<-rexp(m,1)#using f1
+f_1<-f(x)/exp(-x)#f_1 represents f(x)/f1
+theta.hat[2]<-mean(f_1)
+se[2]<-sd(f_1)
+
+x<-rnorm(m,0,1)#using f2
+f_2<-f(x)/(exp(-x^2/2)/sqrt(2*pi))#f_2 represents f(x)/f2
+theta.hat[3]<-mean(f_2)
+se[3]<-sd(f_2)
+
+x<-runif(m)#using f3
+y<-x^(1/3)# inverse transform method
+f_3<-f(y)/(3*(y^2))
+theta.hat[4]<-mean(f_3)
+se[4]<-sd(f_3)
+calculus<-0.5-theta.hat
+library(kableExtra)
+x_html <- knitr::kable((rbind(theta.hat,calculus,se)),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=12)#set the size of words in the table
+```
+
+From the results in the table of calculus and standard error, we can see when we use $3x^2$ as the importance function, the values of calculus is most approximately equal to the real values of this calculus,and its standard error is only`r se[4]`,so we can choose it as a importance function among these three functions. 
+
+```{r,results='hold'}
+f<-function(x)
+{
+  y<-(x^2*exp(-x^2/2)/sqrt(2*pi))*(x>0)*(x<1)
+  return(y)
+}
+y<-integrate(f,0,1)
+print(y)
+```
+
+And then we use the function of integrate() to calculate the value of $\int_0^{1}\frac{x^{2}}{\sqrt{2\pi}}\exp{\frac{-x^2}{2}}dx$,from the result,we can see using $3x^2$ as importance function is also the best choice.
+
+# 2021-10-14
+
+## Question
+Exercises 6.5and 6.A(page180-181,Statistical Computating with R).
+
+If we obtain the powers for two methods under a particular simulation setting with 10,000 experiments: say, 0.651 for one method and 0.676 for another method. We want to know if the powers are different at 0.05 level.
+
+1:What is the corresponding hypothesis test problem?
+ 
+2: What test should we use?  Z-test, two-sample t-test, paired-t test or McNemar test?Why?
+ 
+3: Please provide the least necessary information for hypothesis testing.
+
+## Answers
+
+\
+6.5:
+\
+
+  This question aims to estimate a 95% symmetric t-interval for the mean of a R-square distribution,For the normal distribution,we can use the following pivotal quantity to estimate the mean of distribution with unknown variance.
+  $$\frac{\sqrt{n}(\bar{X}-\mu)}{s}\sim t(n-1)$$
+  So in this question,we just use the samples of R-square distribution to replace the normal distribution.
+  
+  for the level 0.05,the two sides $100(1-\alpha)$ confidence interval of mean is 
+  $$(\bar{X}-\frac{S*t_{0.95}(n-1)}{\sqrt{n}}
+,\bar{X}+\frac{S*t_{0.95}(n-1)}{\sqrt{n}})$$
+```{r}
+n<-20#the number of samples of R-square distribution
+alpha<-0.05
+set.seed(1234)
+func<-function(n,alpha)
+{
+  sp<-rchisq(n,df=2)
+  es1<-mean(sp)-sd(sp)*qt(alpha/2,df=n-1)/sqrt(n)
+  es2<-mean(sp)-sd(sp)*qt(1-alpha/2,df=n-1)/sqrt(n)
+  return(c(es1,es2))
+}
+level<-replicate(100000,func(n,alpha))
+upper<-level[1,]
+lower<-level[2,]
+interval<-c(mean(lower),mean(upper))
+real_alpha<-sum(lower<2&upper>2)/100000
+interval
+real_alpha
+```
+
+For this case,we use the pivotal quantity to conduct 100000 simulations to estimate the interval with the level of $\alpha=0.05$,and then we get 100000 intervals of $\mu$,and the mean of lower bounder and upper bounder are `r mean(lower)` and `r mean(upper)`,so the interval is (`r interval`).Besides,the frequency of $\mu=2$ lies to the interval is `r real_alpha`,compared with example 6.4, the UCL is approximately 0.773, which is much smaller than the `r real_alpha`, so we can conclude the t-interval should be more robust to departures from normality than the interval for variance.
+
+\
+6.A
+\
+
+This question aims to use the Monte Carlo method to have a hypothesis test for the parameter $\mu$ for various distributions (i)χ2(1),(ii)Uniform(0,2),(iii)Exponential(rate=1),and the hypothesis test as follows:
+$$ \mu=\mu_{0} \quad vs\quad\mu\neq\mu_{0}$$
+For the following simulations,we choose the number of samples as 100,and the pivotal quantity is 
+$$T^{\ast}=\frac{\bar{X}-\mu_{0}}{S/\sqrt{100}}\sim t(99)$$
+```{r}
+# chi-square distribution
+set.seed(1234)
+N<-100
+alpha<-0.05
+mu_0<-1 # the expectation of χ2(1).
+f1<-function(N)
+{
+sp<-rchisq(N,df=1)
+qt<-(mean(sp)-mu_0)*sqrt(N)/sd(sp)
+return(qt)
+}
+p1<-replicate(10000,f1(N))#the p_value of 100000 simulations
+x1<-qt(alpha/2,df=N-1)
+x2<-qt(1-alpha/2,df=N-1)
+p_chisq<-sum(p1<x1|p1>x2)/10000
+se.hat1<-sqrt((p_chisq)*(1-(p_chisq))/10000)
+
+# uniform(0,2) distribution
+set.seed(1234)
+N<-100
+alpha<-0.05
+mu_0<-1 # the expectation of χ2(1).
+f2<-function(N)
+{
+sp<-runif(N,0,2)
+qt<-(mean(sp)-mu_0)*sqrt(N-1)/sd(sp)
+return(qt)
+}
+p2<-replicate(100000,f2(N))#the p_value of 10000 simulations
+x1<-qt(alpha/2,df=N-1)
+x2<-qt(1-alpha/2,df=N-1)
+p_unif<-sum(p2<x1|p2>x2)/100000
+se.hat2<-sqrt((p_unif)*(1-(p_unif))/100000)
+
+#exp(1) distribution
+set.seed(1234)
+N<-100
+alpha<-0.05
+mu_0<-1 # the expectation of exp(1).
+f3<-function(N)
+{
+sp<-rexp(N)
+qt<-(mean(sp)-mu_0)*sqrt(N-1)/sd(sp)
+return(qt)
+}
+p3<-replicate(100000,f3(N))#the p_value of 100000 simulations
+x1<-qt(alpha/2,df=N-1)
+x2<-qt(1-alpha/2,df=N-1)
+p_exp<-sum(p3<x1|p3>x2)/100000
+se.hat3<-sqrt((p_exp)*(1-(p_exp))/100000)
+
+#make the table
+x_html <- knitr::kable((cbind(p_chisq,p_unif,p_exp)),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+y_html <- knitr::kable((cbind(se.hat1,se.hat2,se.hat3)),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+ From the table,we can see the empirical type one error rate of three distributions are `r p_chisq`,`r p_unif`,`r p_exp`,which are equal to the $\alpha=0.05$ closely ,and the stand error of them are approximately close to the $10^{-4}$,so we can conclude that t-test is robust to mild departures from normality.
+ 
+\
+question in ppt
+\
+This question aims to discuss how to test whether the powers are different at two methods at 0.05 level.
+
+So at first we should know how to calculate the powers of a simulation with experiments.
+
+As for the definition of power$$power=P_{H_{0}}(p_{value}<\alpha)$$
+
+it equals with $\frac{\sum_{i=1}^{N}I(p_{value_{(i)}}<\alpha)}{N}$, and$\sum_{i=1}^{N}I(p_{value_{i}}<\alpha)\sim B(N,p)\quad p=P(p_{value}<\alpha)$,so we can conclude that $$power\sim B(1,p)\quad p=P(p_{value}<\alpha)\quad $$ when the parameter lies to the space of null hypothesis.
+
+Therefore, according to the meaning of question,for two different methods, the powers of two methods are 0.651,0.676 respectively.So we can get $power_{1}=\widehat{p1}$,$power_{2}=\widehat{p2}$
+
+And because the number of simulations is 10000,so this question is transformed into the following hypothesis.
+$$H_{0}:p_{1}=p_{2}\quad H_{1}:p_{1}\neq p_{2}$$
+Next we use two different test methods to test this problem.
+
+The first method is Z test, using large sample theory and slutsky theorem, we can get the following statistics:
+
+$$\frac{\widehat{p_{1}}-\widehat{p_{2}}-(p_{1}-p_{2})}{\sqrt{\frac{\widehat{p_{1}}(1-\widehat{p_{1}})}{n}+\frac{\widehat{p_{2}}(1-\widehat{p_{2}})}{n}}}\sim N(0,1)$$
+From the question, we can get $\widehat{p_{1}}=0.651$,$\widehat{p_{2}}=0.676$,so when the null hypothesis is true,the value of statistic is -1.65,so we can not reject the null hypothesis at the level of 0.05.
+
+The second method is t-test,and the statistics as follows:
+
+$$\frac{\widehat{p_{1}}-\widehat{p_{2}}-(p_{1}-p_{2})}{\sqrt{\frac{p_{1}(1-p_{1})}{n}+\frac{p_{2}(1-p_{2})}{n}}}\sim t(2n-2)$$
+So we should get the sample variance additionally to get the value of this statistics.
+
+For the two methods,the first one can get the value directly, but the results maybe unrobust.And the second one is more robust compared with the first one.
+
+#2021-10-21
+
+## Question
+Exercises 6.C (pages 182, Statistical Computating with R).
+
+## Answers
+The first question is to repeat the example 6.8 with multivariate distributions.
+
+Firstly,the definition of skewness is $$\beta_{1,d}=E[(X-\mu)^{T}\Sigma^{-1}(Y-\mu)]$$
+
+Then the estimation of $\beta_{1,d}$ is $$b_{1,d}=\frac{1}{n^{2}}\sum_{i,j=1}^{n}((X_{i}-\bar{X})^{T}\widehat{\Sigma}^{-1}(X_{j}-\bar{X}))^{3}$$
+
+$$\frac{nb_{1,d}}{6}\sim\chi^{2}(\frac{d(d+1)(d+2)}{6})\quad n\rightarrow\infty$$
+
+Besides,The asymptotic distribution of √b1 does not depend on the mean and variance of the sampled normal distribution, so the samples can be generated from the standard normal distribution.
+
+```{r}
+library(MASS)
+d<-2#dimension of random vectors
+n<-10000#numbers of experiment 
+N<- c(10, 20, 30, 50,100,500)#numbers of samples
+cv<-qchisq(0.95,(d*(d+1)*(d+2)/6))#0.95 quantile of chi-square distribution
+p_value <- numeric(length(N))
+mn<-function(n,d)#generate random vectors of standard multivariate normal distribution,r represents number of vectors.
+{
+  mu<-integer(d)
+  sigma<-matrix(data=0,d,d)
+  sigma<-diag(d)
+  y<-mvrnorm(n,mu,sigma)
+  return(y)
+}
+statistic<-function(X)#compute the value of estimator of skewness.
+{
+  sigma=cov(X,X)
+  n=nrow(X)
+  mat=X%*%(solve(sigma))%*%(t(X))
+  return(sum(mat^3)/(6*n))
+}
+for(i in 1:length(N))#compute the rate of rejection of test.
+{
+  sktests<-numeric(n)
+  for(j in 1:n)
+  {
+    x<-scale((mn(N[i],d)),center=T,scale=T)
+    sktests[j]<-as.integer(statistic(x)>cv)
+    j<-j+1
+  }
+  p_value[i]<-mean(sktests)
+  i<-i+1
+}
+#make the table
+y_html <- knitr::kable((cbind(N,p_value)),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+  From the part of code,we can see with the increasing of numbers of samples,the rejection rate of $\beta_{1d}=0$
+is more close to the defined rate $\alpha=0.05$.In the code part,to avoid the situation that sample covariance matrix tends to degenerate with high dimension, we default the dimension of samples as `r d`.And as the size of samples close to the `r max(N)`,the empirical rate close to $\alpha$,it also turns out that the limit distribution of $\frac{nb_{1,d}}{6}$is $$\frac{nb_{1,d}}{6}\sim\chi^{2}(\frac{d(d+1)(d+2)}{6})\quad n\rightarrow\infty$$
+
+
+To repeat the example 6.10 in multivariate normal distribution,we define $X\sim N(\mu,I_{n})$,$Y\sim N(\mu,100I_{n})$, and the contaminated multivariate normal distribution is $$\epsilon X+(1-\epsilon)Y$$
+
+
+```{r}
+library(MASS)
+set.seed(1234)
+d<-2#dimension of random vectors
+n<-5000#numbers of experiment 
+k<-250#numbers of samples
+epsilon <- c(seq(0,0.2,0.01),seq(0.2,1,0.05))
+N <- length(epsilon)
+powe<- numeric(N)#power of test
+cv<-qchisq(0.95,(d*(d+1)*(d+2)/6))#0.95 quantile of chi-square distribution
+statistic<-function(X)#compute the value of estimator of skewness.
+{
+  sigma=cov(X,X)
+  n=nrow(X)
+  mat=X%*%(solve(sigma))%*%(t(X))
+  return(sum(mat^3)/(6*n))
+}
+for (j in 1:N)
+{ 
+weight<-epsilon[j]
+sktests<-numeric(n)
+for (i in 1:n)
+{
+sigma<-sample(c(1,10),replace=TRUE,size=k*d,prob=c(1-weight,weight))
+x<-array(rnorm(k*d,0,sigma),dim=c(k,d))
+y<-scale(x,center=T,scale=T)
+sktests[i] <- as.integer((statistic(y))>=cv)
+}
+powe[j] <- mean(sktests)
+}
+print(powe)
+plot(epsilon, powe, type = "b",
+xlab = bquote(epsilon), ylim = c(0,1),main="power and epsilon")
+abline(h = 0.05, lty = 3)
+```
+
+  From the first part,we can see when the number of samples exceed 100,the effect of the empirical rate is significant.Considering the speed of computing and limit distribution of $\beta_{1,d}$,we default the number of samples as 250, and the number of experiments is 5000,the significant level is 0.05,then we can get the plots of $\epsilon$ and power.From the plot we can get when $\epsilon=0$ or $\epsilon=1$,the power is`r powe[1]` and `r powe[38]`,approximately 0.05,and when $0 <ε< 1$, the
+empirical power of the test is greater than 0.05 and highest in the interval of (0,0.2).
+# 2021-10-28
+
+## Question
+Exercises 7.7,7.8,7.9 and 7.B (pages 213, Statistical Computating with R).
+
+\
+7.7
+\
+The question is about estimating the parameter $\theta$,where $\theta$ is $$\theta=\frac{\hat{\lambda_{1}}}{\sum_{i=1}^{5}\hat{\lambda_{i}}}$$,let $\hat{\lambda_{1}},\hat{\lambda_{2}},\hat{\lambda_{3}},\hat{\lambda_{4}},\hat{\lambda_{5}}$ be the eigenvalues of $\hat{\Sigma}$,where $\hat{\Sigma}$ is the MLE of $\Sigma$.
+
+Then we use the method of bootstrap to estimate the bias and standard error of $\theta$.
+
+ ```{r}
+library(bootstrap)
+set.seed(1234)
+B<-2000 # number of replicates
+results<-numeric(B)
+ev<-eigen(cov(scor))
+theta<-max(ev$values)/sum(ev$values)
+statis<-function(X)
+{
+index<-sample(1:nrow(X),size=nrow(X),replace=TRUE)
+sp<-numeric(nrow(X))
+for(i in 1:nrow(X))
+{
+sp<-rbind(sp,X[index[i],])
+i<-i+1
+}
+sp<-sp[-1,]
+ev<-eigen(cov(sp))
+stat<-max(ev$values)/sum(ev$values)
+return(stat)
+}
+results<-replicate(B,statis(scor))
+#mean(results)
+b_boot<-mean(results)-theta
+sd_boot<-sd(results)
+round(c(b_boot,sd_boot),5)
+```
+
+From the code, we define the number of replications as `r B`, by using the method of bootstrap, we can find the bias and standard error of $\hat{\theta}$ is only `r b_boot` and `r sd_boot`. 
+
+\
+7.8
+\
+```{r}
+#Jackknife
+ev<-eigen(cov(scor))
+theta<-max(ev$values)/sum(ev$values)
+theta_star<-numeric(nrow(scor))
+for(i in 1:nrow(scor))
+{
+  X<-scor[-i,]
+  ev<-eigen(cov(X))
+  theta_star[i]<-max(ev$values)/sum(ev$values)
+  i<i+1
+}
+b_jack<-(nrow(scor)-1)*(mean(theta_star)-theta)
+sd_jack<-(nrow(scor)-1)*sqrt(var(theta_star)/nrow(scor))
+round(c(b_jack,sd_jack),8)
+```
+
+From the code,by using the method of Jackknife, we can find the bias and standard error of $\hat{\theta}$ is only `r b_jack` and `r sd_jack`.
+
+\
+7.9
+\
+  This question intends us to compute 95% percentile and BCa confidence intervals. As for the 95% percentile confidence interval, The quantiles of the empirical distribution are estimators of the quantiles of the sampling distribution of $\theta$.So from the ecdf of the replicates, we can compute
+the $\frac{\alpha}{2}$ quantile $\theta_{\frac{\alpha}{2}}$ and the $(1-\frac{\alpha}{2})$ quantile $\theta_{1-\frac{\alpha}{2}}$.
+```{r}
+library(bootstrap)
+set.seed(1234)
+B<-2000 # number of replicates
+alpha<-0.05#quantiles
+results<-numeric(B) 
+ev<-eigen(cov(scor))
+theta<-max(ev$values)/sum(ev$values)
+statis<-function(X)
+{
+  index<-sample(1:nrow(X),size=nrow(X),replace=TRUE)
+  sp<-numeric(nrow(X))
+  for(i in 1:nrow(X))
+  {
+    sp<-rbind(sp,X[index[i],])
+    i<-i+1
+  }
+  sp<-sp[-1,]
+  ev<-eigen(cov(sp))
+  stat<-max(ev$values)/sum(ev$values)
+  return(stat)
+}
+results<-replicate(B,statis(scor))
+results<-sort(results)
+lower<-results[B*alpha/2]
+upper<-results[B*(1-alpha/2)]
+interval_perc<-c(lower,upper)
+interval_perc
+```
+
+ In this part,we just use the function sort() to sort the results of replication from minimum to maximum. And then choose the No.`r B*alpha/2` and the No.`r B*(1-alpha/2)` values as the bound of interval.we can get 95% percentile confidence interval is (`r interval_perc`)
+ 
+ Then we use compute the Bca confidence interval.For a $100(1-\alpha)%$ BCa bootstrap confidence interval compute:
+ $$\alpha_{1}=\phi(\hat{z_{0}}+\frac{\hat{z_{0}}+z_{\alpha/2}}{1-\hat{\alpha}(\hat{z_{0}}+z_{\alpha/2})}),$$
+ $$\alpha_{2}=\phi(\hat{z_{0}}+\frac{\hat{z_{0}}+z_{1-\alpha/2}}{1-\hat{\alpha}(\hat{z_{0}}+z_{1-\alpha/2})}),$$
+where $$\hat{z_{0}}=\phi^{-1}(\frac{1}{B}\sum_{b=1}^{B}I(\hat{\theta^{(b)}}<\hat{\theta}),$$
+$$\hat{\alpha}=\frac{\sum_{i=1}^{n}(\overline{\theta_{(.)}}-\theta_{(i)})^3}{(\sum_{i=1}^{n}((\overline{\theta_{(.)}}-\theta_{(i)}))^{2})^{3/2}},$$
+So in this way we can get the Bca interval $$(\hat{\theta^{\star}_{\alpha_{1}}},\hat{\theta^{\star}_{\alpha_{2}}})$$
+
+```{r}
+library(bootstrap)
+library(boot)
+set.seed(1234)
+B<-2000 # number of replicates
+alpha<-0.05#quantiles
+results<-numeric(B)
+ev<-eigen(cov(scor))
+theta<-max(ev$values)/sum(ev$values)
+statis<-function(X)
+{
+  index<-sample(1:nrow(X),size=nrow(X),replace=TRUE)
+  sp<-numeric(nrow(X))
+  for(i in 1:nrow(X))
+  {
+    sp<-rbind(sp,X[index[i],])
+    i<-i+1
+  }
+  sp<-sp[-1,]
+  ev<-eigen(cov(sp))
+  stat<-max(ev$values)/sum(ev$values)
+  return(stat)
+}
+boot_Bca<-function(X)
+{
+results<-replicate(B,statis(X))
+k<-as.integer(results<theta)
+z0<-qnorm((sum(k)/B),0,1)
+L<-mean(results)-results
+a<-sum(L^3)/(6 * sum(L^2)^1.5)
+alpha_1<-pnorm(z0+(z0+qnorm(alpha/2))/(1-a*(z0+qnorm(alpha/2))))
+alpha_2<-pnorm(z0+(z0+qnorm(1-alpha/2))/(1-a*(z0+qnorm(1-alpha/2))))
+results<-sort(results)
+lower<-results[B*alpha_1]
+upper<-results[B*alpha_2]
+interval_bca<-c(lower,upper)
+interval_bca
+}
+boot_Bca(scor)
+```
+
+
+
+```{r}
+set.seed(1234)
+stat <- function(data, index)
+ {
+ x <- data[index,]
+ ev <- eigen(cov(x))$values
+ theta <- ev[1] / sum(ev)
+ return(theta)
+ }
+ bootstrap_result <- boot(data=scor,statistic = stat, R = B)
+ interval_boot<-boot.ci(bootstrap_result, type=c("perc", "bca"))
+ y_html <- knitr::kable((cbind('perc'=interval_perc,'bca'=boot_Bca(scor),'boot_perc'=interval_boot$percent[4:5],'boot_bca'=interval_boot$bca[4:5])),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+  Then we use the function boot.ci to calculate the Compute 95% percentile and BCa confidence intervals for $\hat{\theta}$ and verify the results of estimating.From the table,we can see the results is approximately equal to the results of boot.ci()
+
+\
+7.B
+\
+```{r}
+#N(0,1)
+#set.seed(1)
+options(warn=-1)
+library(boot)
+library(moments)
+N<-1000#numbers of experiment
+n<-100#numbers of random numbers
+B<-2000
+normal<-numeric(N)
+basic<-numeric(N)
+percent<-numeric(N)
+func<-function(x,indices)
+{
+  mu2<-var(x[indices,])
+  mu3<-mean((x[indices,]-mean(x[indices,]))^3)
+  sk<-mu3/mu2^(3/2)
+  return(sk)
+}
+for(j in 1:N)
+{
+x<-as.matrix(rnorm(100))
+sk<-boot(x,statistic=func, R=B)
+ci<-boot.ci(sk,type="all")
+normal[j]<-as.integer((ci$normal[2]<0&&ci$normal[3]>0))
+basic[j]<-as.integer((ci$basic[4]<0&&ci$basic[5]>0))
+percent[j]<-as.integer((ci$percent[4]<0&&ci$percent[5]>0))
+j<-j+1
+}
+normal_rate1<-sum(normal)/N
+basic_rate1<-sum(basic)/N
+percent_rate1<-sum(percent)/N
+y_html <- knitr::kable((cbind('perc'=percent_rate1,'basic'=basic_rate1,'normal'=normal_rate1)),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+```{r}
+#chi-square
+#set.seed(1)
+options(warn=-1)
+library(boot)
+library(moments)
+N<-1000#numbers of experiment
+n<-100#numbers of random numbers
+B<-2000
+normal<-numeric(N)
+basic<-numeric(N)
+percent<-numeric(N)
+func<-function(x,indices)
+{
+  mu2<-var(x[indices,])
+  mu3<-mean((x[indices,]-mean(x[indices,]))^3)
+  sk<-mu3/mu2^(3/2)
+  return(sk)
+}
+for(j in 1:N)
+{
+x<-as.matrix(rchisq(100,5))
+sk<-boot(x,statistic=func, R=B)
+ci<-boot.ci(sk)
+normal[j]<-as.integer((ci$normal[2]<2*sqrt(2/5)&&ci$normal[3]>2*sqrt(2/5)))
+basic[j]<-as.integer((ci$basic[4]<2*sqrt(2/5)&&ci$basic[5]>2*sqrt(2/5)))
+percent[j]<-as.integer((ci$percent[4]<2*sqrt(2/5)&&ci$percent[5]>2*sqrt(2/5)))
+j<-j+1
+}
+normal_rate2<-sum(normal)/N
+basic_rate2<-sum(basic)/N
+percent_rate2<-sum(percent)/N
+y_html <- knitr::kable((cbind('perc'=percent_rate2,'basic'=basic_rate2,'normal'=normal_rate2)),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+ 
+At the rate of 0.95, we can when the samples are from the normal distributions,the coverage rate is very close to the 0.95,but when the samples are from the chi-square distributions,the coverage rate is only 70 percent. 
+
+#2021-11-04
+
+##Question
+
+Exercise 8.2(page242,Statistical Computating with R).
+Design experiments for evaluating the performance of the NN,energy,and ball methods in various situations.
+
+1:Unequal variances and equal expectations.
+
+2:Unequal variances and unequal expectations.
+
+3:Non-normal distributions:t distribution with 1 df(heavy-tailed distribution),bimodel distribution(mixture of two normal distributions).
+
+4:Unbalanced samples(say,1 case versus 10controls).
+
+5:Note:The parameters should be chosen such that the powers are distinguishable(say,range from 0.3 to 0.8).
+
+\
+8.2
+\
+```{r}
+set.seed(0)
+data<-iris
+R<-999
+x <- as.numeric(data[1:50,2])
+y <- as.numeric(data[1:50,3])
+z<-c(x,y)
+N<-length(z)
+per<-length(x)
+results<-numeric(R)
+K<-1:per
+t<-(cor.test(x,y))$estimate
+for(i in 1:R)
+{
+  per<-sample(K,replace=FALSE)
+  sp_x<-z[per]
+  sp_y<-z[-per]
+  results[i]<-cor(sp_x,sp_y,method="spearman")
+  i<-i+1
+}
+pvalue<-mean(abs(c(t,results))>abs(t))
+round(c(pvalue,(cor.test(x,y))$p.value),3)
+```
+
+In the simulation of 8.2,we use the iris as the data set to calculate the Spearman rank correlation test. And we use the permutation test and function cor.test() respectively. With the number of experiments is 1000,we can find the p_value of two methods is `r pvalue` and `r cor.test(x,y)$p.value` respectively, we can see these two values are very close to each other.
+ 
+\
+question 2
+\
+This question aims to design experiments for evaluating the performance of the NN,energy,and ball methods in various situations.
+
+```{r}
+library(Ball)
+library(RANN)
+library(energy)
+library(boot)
+set.seed(1234)
+##NN test
+k<-2
+n1<-50
+n2<-50
+alpha<-0.05
+n<-500#number of experiments
+NN<-numeric(n)
+energy<-numeric(n)
+Ball<-numeric(n)
+Tn<-function(z, index,length,k)
+{
+  n1<-length[1] 
+  n2<-length[2] 
+  n<-n1+n2
+  if(is.vector(z))
+  z<-data.frame(z,0)
+  z<-z[index, ]
+  NN_result<-nn2(data=z, k=k+1)
+  part_1<- NN_result$nn.idx[1:n1,-1]
+  part_2<- NN_result$nn.idx[(n1+1):n,-1]
+  result1<- sum(part_1<=n1+0.5)
+  result2<- sum(part_2>=n1+0.5)
+  return((result1+result2)/(k * n))
+}
+#N<-c(nrow(x),nrow(y))
+NN_test<-function(data,stat,k)
+{
+  boot_results<-boot(data,Tn,R=999,sim="permutation",length=N,k=2)
+  p_value<-mean(c(boot_results$t0,boot_results$t)>boot_results$t0)
+  return(p_value)
+}
+for ( i in 1:n)#equal expectation and unequal variance
+{
+x <- matrix(rnorm(n1*k,0,1),ncol=k)
+y <- matrix(rnorm(n2*k,0,1.5),ncol=k)
+z <- rbind(x,y)
+N<-c(nrow(x),nrow(y))
+NN[i]<-NN_test(z,Tn,k)
+energy[i]<-eqdist.etest(z, sizes=N, R=999)$p.value
+Ball[i]<-bd.test(x=x, y=y, num.permutations=999)$p.value
+i<-i+1
+}
+NN_pvalue_1<-mean(NN<alpha)
+energy_pvalue_1<-mean(energy<alpha)
+Ball_pvalue_1<-mean(Ball<alpha)
+x_html<-knitr::kable((cbind('NN1'=NN_pvalue_1,'energy_1'=energy_pvalue_1,'Ball_1'=Ball_pvalue_1)),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+
+
+for( j in 1:n)#equal expectation and unequal variance
+{
+x <- matrix(rnorm(n1*k,0,1),ncol=k)
+y <- matrix(rnorm(n2*k,1.5,1.5),ncol=k)
+z <- rbind(x,y)
+N<-c(nrow(x),nrow(y))
+NN[i]<-NN_test(z,Tn,k)
+energy[i]<-eqdist.etest(z, sizes=N, R=999)$p.value
+Ball[i]<-bd.test(x=x, y=y, num.permutations=999)$p.value
+i<-i+1
+}
+NN_pvalue_2<-mean(NN<alpha)
+energy_pvalue_2<-mean(energy<alpha)
+Ball_pvalue_2<-mean(Ball<alpha)
+y_html<-knitr::kable((cbind('NN2'=NN_pvalue_2,'energy_2'=energy_pvalue_2,'Ball_2'=Ball_pvalue_2)),"html")
+kableExtra::kable_styling(y_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+
+p<-0.5
+for( m in 1:n)#t(1) and bimodel distribution
+{
+  x <- rt(n1,1)
+  weight<-sample(c(0,1),n2,replace=TRUE,prob=c(p,1-p))
+  y <- weight*rnorm(n2,0,1)+(1-weight)*rnorm(n2,0,2)
+  z <- c(x,y)
+  N<-c(length(x),length(y))
+  NN[m]<-NN_test(z,Tn,k)
+  energy[m]<-eqdist.etest(z, sizes=N, R=999)$p.value
+  Ball[m]<-bd.test(x=x, y=y, num.permutations=999)$p.value
+  m<-m+1
+}
+NN_pvalue_3<-mean(NN<alpha)
+energy_pvalue_3<-mean(energy<alpha)
+Ball_pvalue_3<-mean(Ball<alpha)
+z_html<-knitr::kable((cbind('NN3'=NN_pvalue_3,'energy_3'=energy_pvalue_3,'Ball_3'=Ball_pvalue_3)),"html")
+kableExtra::kable_styling(z_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+
+for( l in 1:n)#Unbalanced samples
+{
+x <- matrix(rnorm(10*k,0,1),ncol=k)
+y <- matrix(rnorm(100*k,1.5,1.5),ncol=k)
+z <- rbind(x,y)
+N<-c(nrow(x),nrow(y))
+NN[i]<-NN_test(z,Tn,k)
+energy[i]<-eqdist.etest(z, sizes=N, R=999)$p.value
+Ball[i]<-bd.test(x=x, y=y, num.permutations=999)$p.value
+i<-i+1
+}
+NN_pvalue_4<-mean(NN<alpha)
+energy_pvalue_4<-mean(energy<alpha)
+Ball_pvalue_4<-mean(Ball<alpha)
+z_html<-knitr::kable((cbind('NN4'=NN_pvalue_4,'energy_4'=energy_pvalue_4,'Ball_4'=Ball_pvalue_4)),"html")
+kableExtra::kable_styling(z_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+  We get several results of simulations under the 4 kinds of background.
+
+1:To make a equal distribution of two samples with equal expectations and unequal variances, we make two samples from $N(0,0,1,1,0)$ and $N(0,0,1.5,1.5,0)$. Then using  three methods to calculate the power of test with the level of 0.1. From the result, we can see Ball test are generally more powerful than nearest NN test and energy test.
+
+2:Under the unequal expectations and variances background, we use two samples $N(0,0,1,1,0)$ and $N(1.5,1.5,1.5,1.5,0)$, just like the circumstances of (1), Ball test are generally more powerful than nearest NN test and energy test.
+
+3:When samples are from $t(1)$ and bimodel model, the bimodel is $$\epsilon N(0,1)+(1-\epsilon)N(0,2)\quad \epsilon\sim b(1,0.5)$$, the performance of ball method is worse than  other two methods.
+
+4:When the samples are unbalanced samples, we set the sample number of x as 20 ,the sample number of y as 200, we can see the ball method and the energy method is much better than the NN test.
+
+In general,the performance of energy method and ball method is better than the NN test, but for energy method and ball method, which one is better depends on the samples concretely.
+
+#2021-11-11
+
+##Questions
+
+1:Exercises 9.3 and 9.8 (pages 277-278, Statistical Computating with R).
+
+2:For each of the above exercise, use the Gelman-Rubin method to monitor convergence of the chain, and run the chain until it converges approximately to the target distribution according to $\hat{R}$<1.2.
+
+\
+9.3
+\
+This question aims to use the Metropolis-Hastings sampler to generate random variables from a standard Cauchy distribution.
+The key to use the Metropolis-Hastings sampler is finding a suitable proposal distribution.In this question, we define the normal distributions with different variances as the proposal distribution respectively, then define $$\alpha(X_{t},y)=min(1,\frac{f(Y)g(X_{t}|Y)}{f(X_{t})g(Y|X_{t}))})$$ as the level of rejection.
+
+And $g(Y|X_{t})$ is the $N(0,|X_{t}|)$density evaluated at Y,and $g(X_{t}|Y)$is the$N(0,|Y|)$density evaluated at$X_{t}$.
+
+```{r}
+#set.seed(0)
+k<-4
+N<-20000
+burn<<-2000
+x0<-c(-10,-5,5,10)
+cauthy_chain<-function(sigma,N,mu)#sigma is the parameter of proposal function,N is numbers of chains.
+{
+set.seed(0)
+sd_cauthy<-function(x)
+{
+ y<-1/(pi*(1+x^2))
+ return(y)
+}
+xt<-numeric(N)
+yt<-numeric(N)
+xt[1]<-rnorm(1,mu,sigma)
+for(i in 2:N)
+{
+  yt[i]<-rnorm(1,xt[i-1],sigma)
+  u<-runif(1)
+  r<-pmin(1,((sd_cauthy(yt[i])*dnorm(xt[i-1],yt[i],sigma))/(sd_cauthy(xt[i-1])*dnorm(yt[i],xt[i-1],sigma))))
+  if(u<r)
+  {
+    xt[i]<-yt[i]
+  }
+  else
+  {
+    xt[i]<-xt[i-1]
+  }
+  i<-i+1
+}
+return(xt)
+}
+xt<-cauthy_chain(1,N,0)[-(1:1000)]
+p<-seq(0.1,0.9,0.1)
+deciles<-quantile(xt,probs=p)
+decile_real<-qt(seq(0.1,0.9,0.1),1)
+x_html<-knitr::kable(round(cbind(decile_real,deciles),3),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+
+#the function of Gelman.Rubin
+Gelman.Rubin<-function(psi)
+{
+psi<-as.matrix(psi)
+n<-ncol(psi)
+k<-nrow(psi)
+psi.means<-rowMeans(psi)# row means
+B<-n*var(psi.means)#between variance est.
+psi.w<-apply(psi,1,"var")#within variances
+W<-mean(psi.w)#within est.
+v.hat<-W*(n-1)/n+(B/n)#upper variance est.
+r.hat<-v.hat/W#G-R statistic
+return(r.hat)
+}
+#compute the Gelman-Rubin statistics and make a plot of R
+k<-4
+N<-20000
+burn<<-2000
+x0<-c(-10,-5,5,10)
+sp<- matrix(0, nrow=k, ncol=N)
+for (i in 1:k)
+{
+sp[i, ] <- cauthy_chain(1,N,x0[i])
+i<-i+1
+}
+psi <- t(apply(sp, 1, cumsum))
+for (j in 1:nrow(psi))
+{
+psi[j,] <- psi[j,] / (1:ncol(psi))
+j<-j+1
+}
+R<-Gelman.Rubin(psi)
+rhat_cauthy<-numeric(N)
+for(k in(burn+1):N)
+{
+rhat_cauthy[k]<-Gelman.Rubin(psi[,1:k])
+k<-k+1
+}
+plot(rhat_cauthy[(burn+1):N],type="l",xlab="N",ylab="R")
+abline(h=1.2,lty=2)
+```
+
+By selecting different variance,we find the decile of cauthy distribution with proposal function $N(0,1)$ is most close to the real decile.from the table,we can see the 0.2 to 0.4 quantiles are more precise than other quantiles.
+
+And the second part is about the monitoring covergence of the chain,we can calculate the $\hat{R}$ is about`r R` eventually, and from the plot of the $\hat{R}$, we can see when the number of chains is about 8000,$\hat{R}$ will lower than 1.2,which means the covergence of the chain is significant.   
+
+
+\
+9.8
+\ 
+
+This question consider the bivariate density that 
+
+$$f(x,y)\varpropto \dbinom{n}{x}y^{x+a+1}(1-y)^{n-x+b-1},x=0,1,.....n,0\leq y\leq 1.$$
+and the conditional distribution $f(x|y)$ is Binomial(n,y) and $f(y|x)$ is Beta(x+a,n-x+b).
+
+So we can conclude that $$E(X|y)=ny \quad var(X|y)=ny(1-y)$$
+
+and $$E(Y|x)=\frac{x+a}{n+a+b}\quad var(Y|x)=\frac{(x+a)(n-x+b)}{(n+a+b)^2(n+a+b+1)}$$
+
+Then we generate a chain with target joint density$f(x,y)$
+
+```{r}
+set.seed(0)
+N<-15000#length of the chain
+discard<-1500# length of burn
+a<-2
+b<-3
+n<-100
+x0<-c(30,40,50,60)
+y0<-c(0.3,0.4,0.5,0.6)
+sp<-matrix(0,N,2)
+sp[1,]<-c(x0[1],y0[1])
+bivarate_chain<-function(a,b,n,x,y)
+{
+for( i in 2:N)
+{
+  #x<-sp[i-1,2]
+  sp[i,1]<-rbinom(1,n,sp[i-1,2])
+  sp[i,2]<-rbeta(1,(sp[i,1]+a),(n-x0+b))
+  i<-i+1
+}
+return(sp)
+}
+chain<-bivarate_chain(a,b,n,x0,y0)[((discard+1):N),]
+x<-colMeans(chain)
+x_html<-knitr::kable((cbind('mean_binom'=x[1],'mean_beta'=x[2])),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+
+#the function of Gelman.Rubin
+Gelman.Rubin<-function(psi)
+{
+psi<-as.matrix(psi)
+n<-ncol(psi)
+k<-nrow(psi)
+psi.means<-rowMeans(psi)# row means
+B<-n*var(psi.means)#between variance est.
+psi.w<-apply(psi,1,"var")#within variances
+W<-mean(psi.w)#within est.
+v.hat<-W*(n-1)/n+(B/n)#upper variance est.
+r.hat<-v.hat/W#G-R statistic
+return(r.hat)
+}
+bivarate_chain1<-bivarate_chain(a,b,n,x0[1],y0[1])
+bivarate_chain2<-bivarate_chain(a,b,n,x0[2],y0[2])
+bivarate_chain3<-bivarate_chain(a,b,n,x0[3],y0[3])
+bivarate_chain4<-bivarate_chain(a,b,n,x0[4],y0[4])
+xt1=rbind(bivarate_chain1[,1],bivarate_chain2[,1] ,bivarate_chain3[,1] ,bivarate_chain4[,1])
+xt2=rbind(bivarate_chain1[,2],bivarate_chain2[,2] ,bivarate_chain3[,2],bivarate_chain4[,2])
+psi1 <- t(apply(xt1, 1, cumsum))
+psi2 <- t(apply(xt2, 1, cumsum))
+for (i in 1:nrow(psi1))
+{
+psi1[i,] <- psi1[i,] / (1:ncol(psi1))
+psi2[i,] <- psi2[i,] / (1:ncol(psi2))
+i<-i+1
+}
+print(c(Gelman.Rubin(psi1),Gelman.Rubin(psi2)))
+rhat_binomal<-numeric(N)
+rhat_beta<-numeric(N)
+for(k in(discard+1):N)
+{
+rhat_binomal[k]<-Gelman.Rubin(psi1[,1:k])
+rhat_beta[k]<-Gelman.Rubin(psi2[,1:k])
+k<-k+1
+}
+par(mfrow=c(1,2)) 
+plot(rhat_binomal[(discard+1):N],type="l",xlab="N",ylab="R")
+abline(h=1.2,lty=2)
+plot(rhat_beta[(discard+1):N],type="l",xlab="N",ylab="R")
+abline(h=1.2,lty=2)
+
+```
+
+From the results,we set $$a=2,b=3,n=100,x_{0}=30,p=0.3$$,so the  mean of B(100,0.3) and Be(32,73) is 30 and $\frac{32}{105}$,and the results of Gibbs sampling are `r x[1]`,`r x[2]`respectively,which are approximately equal to the expectation of these two distributions.
+
+The second question require us to use the Gelman-Rubin method to monitor convergence of the chain, and run the chain until it converges approximately to the target distribution according to $\hat{R}$<1.2.
+
+And then from the two plots of $R^{2}$, we can see the speed of coveregence is apparently fast,when the chain is about 3000-4000,the $R^{2}$ is lower than 1.2.Eventually, the $R^{2}$ of two chains is about`r Gelman.Rubin(psi1)` and `r Gelman.Rubin(psi2)`
+
+#2021-11-18
+
+##Questions
+
+Suppose$T_{1},...,T_{n}$are i.i.d.samples drawn from the exponential distribution with expectation$\lambda$.Those values greater than $\tau$ are not observed due to right censorship,so that the observed values are$Y_{i}=T_{i}I(T_{i}\leq\tau)+\tau I(T_{i}\leq\tau),i=1,...,n.$ Suppose$\tau=1$ and the observed $Y_{i}$ values areas follows:
+$$0.54,0.48,0.33,0.43,1.00,1.00,0.91,1.00,0.21,0.85$$
+
+Use the E-M algorithm to estimate $\lambda$,compare your result with the observed data MLE(note:$Y_{i}$ follows a mixture distribution).
+
+\
+11.3
+\
+This question requires us to compute the kth term and sum of the following series.
+
+$$\sum_{k=0}^{\infty}\frac{(-1)^{k}}{k!2^{k}}\frac{\parallel a \parallel^{k}}{(2k+1)(2k+2)}\frac{\Gamma(\frac{d+1}{2})\Gamma(k+\frac{3}{2})}{\Gamma(k+\frac{d}{2}+1)}$$
+
+Before the experiment, we made a pre-experiment to get the numbers of covergence of the sum of series.
+
+```{r}
+a<-c(1,2)
+error<-10^(-100)
+k<-1
+fn<-function(a,d,m)
+{
+  N<-100
+  series<-numeric(N)
+  k_norm<-function(a,k)#calculate the Kth norm of a vector
+  {
+    s<-a^(2)
+    knorm<-(sum(s))^(1/(2))
+    knorm<-knorm^k
+    return(knorm)
+  }
+  f<-function(a,d,k)#series
+  {
+    f1<-((-1)^k)/prod(1:k)/2^k
+    f2<-k_norm(a,2*k+2)/(2*k+1)/(2*k+2)
+    f3<-exp(lgamma((d+1)/2)+lgamma(k+3/2)-lgamma(k+d/2+1))
+    return(f1*f2*f3)
+  }
+  series[1]<-(k_norm(a,2))*exp(lgamma((d+1)/2)+lgamma(3/2)-lgamma(d/2+1))/2
+  while(abs(series[k])>error)
+  {
+    series[k+1]<-f(a,length(a),k)
+    k<-k+1
+  }
+series<-series[-(k:N)]
+sum<-cumsum(series)
+print(sum)
+print(series)
+}
+fn(a,2,10)
+```
+
+From the results of pre-experiment, we define the $a$ as $(1,2)^{\tau}$. we can see the sum of series converges when iterations just about 10 times.Besides,we set a threshold `r error` for every kth term.Then we can find when the iteration times is about 80,the value of kth term is lower than the error.In this way,we can get the value of kth term and sum of the series.
+
+```{r}
+a<-c(1,2)
+eplision<-10^(-100)
+k<-1
+fn<-function(a,d,m)
+{
+  N<-100
+  series<-numeric(N)
+  k_norm<-function(a,k)#calculate the Kth norm of a vector
+  {
+    s<-a^(2)
+    knorm<-sum(s)^(1/2)
+    knorm<-knorm^k
+    return(knorm)
+  }
+  f<-function(a,d,k)#series
+  {
+    f1<-((-1)^k)/prod(1:k)/2^k
+    f2<-k_norm(a,2*k+2)/(2*k+1)/(2*k+2)
+    f3<-exp(lgamma((d+1)/2)+lgamma(k+3/2)-lgamma(k+d/2+1))
+    return(f1*f2*f3)
+  }
+  series[1]<-(k_norm(a,2))*exp(lgamma((d+1)/2)+lgamma(3/2)-lgamma(d/2+1))/2
+  while(abs(series[k])>eplision)
+  {
+    series[k+1]<-f(a,length(a),k)
+    k<-k+1
+  }
+series<-series[-(k:N)]
+return(series[m])
+}
+m<-seq(1,15,1)
+series<-numeric(length(m))
+for( i in 1:length(m))
+{
+  series[i]<-fn(a,length(a),m[i])
+  i<-i+1
+}
+sum<-cumsum(series)
+x_html<-knitr::kable(rbind(sum,series),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+From this part of code,we calculate the values of 1st to 15th term,And then get the cumulative sum of these terms, we can conclude the sum of series is about `r sum[15]`.
+
+\
+11.5
+\
+This question require us to write a function to solve the equation $$\frac{2\Gamma(\frac{k}{2})}{\sqrt{(\pi(k-1))}\Gamma(\frac{k-1}{2})}\int_{0}^{c_{k-1}}(1+\frac{u^{2}}{k-1})^{-\frac{k}{2}}du=\frac{2\Gamma(\frac{k+1}{2})}{\sqrt{(\pi(k))}\Gamma(\frac{k}{2})}\int_{0}^{c_{k}}(1+\frac{u^{2}}{k})^{-\frac{k+1}{2}}du$$ for a, where $$c_{k}=\sqrt{\frac{a^2k}{k+1-a^2}}$$
+
+From the expression of this equation, we can see the calculus 
+in this equation is the cdf of the t-distribution. So we can transform this equation as $$F_{t_{k-1}}(c_{k-1})=F_{t_{k}}(c_{k})$$
+```{r}
+k<-c(4,10,15,20,25)
+#t-distribution
+ck<-function(a,k)
+{
+  y<-sqrt(a^2*k/(k+1-a^2))
+  return(y)
+}
+equation_k1<-function(a)
+{
+ eq<-pt(ck(a,k[1]-1),k[1]-1)-pt(ck(a,k[1]),k[1])
+ return(eq)
+}
+equation_k2<-function(a)
+{
+ eq<-pt(ck(a,k[2]-1),k[2]-1)-pt(ck(a,k[2]),k[2])
+ return(eq)
+}
+equation_k3<-function(a)
+{
+ eq<-pt(ck(a,k[3]-1),k[3]-1)-pt(ck(a,k[3]),k[3])
+ return(eq)
+}
+equation_k4<-function(a)
+{
+ eq<-pt(ck(a,k[4]-1),k[4]-1)-pt(ck(a,k[4]),k[4])
+ return(eq)
+}
+equation_k5<-function(a)
+{
+ eq<-pt(ck(a,k[5]-1),k[5]-1)-pt(ck(a,k[5]),k[5])
+ return(eq)
+}
+solution_k1=uniroot(equation_k1,c(0.01,sqrt(k[1])),tol=1e-10)$root
+solution_k2=uniroot(equation_k2,c(0.01,sqrt(k[2])-0.1),tol=1e-10)$root
+solution_k3=uniroot(equation_k3,c(0.01,sqrt(k[3])-0.1),tol=1e-10)$root
+solution_k4=uniroot(equation_k4,c(0.01,sqrt(k[4]-0.1)),tol=1e-10)$root
+solution_k5=uniroot(equation_k5,c(0.01,sqrt(k[5]-1)),tol=1e-10)$root
+x_html<-knitr::kable(rbind(sum,series),"html")
+x_html<-knitr::kable((cbind('k=4'=solution_k1,'k=10'=solution_k2,'k=15'=solution_k3,'k=20'=solution_k4,'k=25'=solution_k5)),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+The question 11.5 I am not able to use the integrate() to calculate the value,so I  just use the method of t distribution. From the results of code,we have calculated the roots in the interval of (0,$\sqrt n$).Then we use the symmetry of the function,we can get 3 solutions of each k. 
+
+\
+question 3
+\
+The question 3 requires us to make a comparison between the method of MLE and EM algorithm.
+
+When using the method of MLE,we should calculate the joint distribution of $Y_{i}(i=1,2,.....n)$
+
+As the $\tau=1$ and the expectation is $\lambda$,we can get the joint distribution is $$\frac{n!}{(n-r)!}(\frac{1}{\lambda})^{r}\exp^{-\frac{(n-r)+\sum_{i=1}^{n}Y_{i}}{\lambda}}$$
+
+Then the log likelihood is $$-\frac{(n-r)+\sum_{i=1}^{n}Y_{i}}{\lambda}-r\log(\lambda)$$
+
+So we can use the mle function() to get the result.
+
+In order to implementing the EM algorithm, we should get the E step and M step
+
+E step:
+
+$$l(\lambda|T_{1},T_{2}....T_{n})=n\log(\lambda)-\lambda\sum_{i=1}^{n}T_{i}$$
+Then$$Q(\lambda|\lambda_{t})=E(l(\lambda|T_{1},T_{2}....T_{n})|x,\lambda^{(i)})$$
+$$=n\log(\lambda)-\lambda\sum_{i=1}^{n}E(T_{i}|x_{i},\lambda^{t})$$
+$$=n\log(\lambda)-\lambda[\sum_{i=1}^{r}t_{i}+(n-r)]+\frac{(n-r)\lambda}{\lambda^{t}}$$
+$r$ represents the number of observations $t_{i}>1$
+
+And then we can get the M step from the E step:
+
+M step:
+
+$$\frac{\partial Q}{\partial \lambda}=\frac{n}{\lambda}-(\sum_{i=1}^{r}t_{i}+(n-r))-\frac{(n-r)}{\lambda^{(t)}}=0$$
+Then we can get $$\frac{n}{\lambda^{(t+1)}}=(\sum_{i=1}^{r}t_{i}+(n-r))-\frac{(n-r)}{\lambda^{(t)}}$$
+
+```{r}
+#MLE
+sp<-c(0.54,0.48,0.33,0.43,1.00,1.00,0.91,1.00,0.21,0.85)
+n1<-sum(as.integer(sp<1))
+n2<-sum(as.integer(sp==1))
+mlogL<-function(theta=1)
+{#minus log-likelihood of exp.density,rate1/theta
+y<-(-(sum(sp)/theta+n1*log(theta)))
+return(-y)
+}
+library(stats4)
+fit<-mle(mlogL)
+summary(fit)
+#EM
+ep1<-10^(-6)
+k<-1
+lambda<-numeric(50)
+lambda[1]<-1
+lambda[2]<-(sum(sp)+n2*lambda[1])/length(sp)
+while(abs(lambda[k+1]-lambda[k])>10^(-6))
+{
+  lambda[k+2]=(sum(sp)+n2*lambda[k+1])/length(sp)
+  k<-k+1
+}
+print(c(lambda[k+1],k))
+```
+
+From the results,we can see the results of MLE and EM algorithm is the same as`r lambda[k+1]`, and the number of iterations of EM algorithm is only `r k`times.
+
+#2021-11-25
+
+##Questions
+Exercises 1 and 5(page204,Advanced R)
+
+Exercises 1 and 7(page214,Advanced R)
+
+\
+204-1
+\
+```{r}
+set.seed(1234)
+trims<-c(0,0.1,0.2,0.5)
+x<-rcauchy(100)
+lapply(trims,function(trim)mean(x,trim=trim))
+lapply(trims, mean,x=x)
+```
+
+  From the results,we can see the results of these two methods are the same,but the process of invocations is not the same.The function lapply(x,fun,......) has main two parameters,the first main parameter is a list x,and the second main parameter is a function.The process of invocation is Passing each column of x to f and returns a new list.
+  
+  So the process of the first invocation is
+$$y=trims=\left\{\begin{array}{rl}0.1& trims[1],\\0.2&trims[2],\\0.5&trims[3],\\1&trims[4].\end{array}\right.\Longrightarrow list\left\{\begin{array}{rl}mean(x,y[1]),\\mean(x,y[2]),\\mean(x,y[3]),\\mean(x,y[4]).\end{array}\right.$$
+when x is rcauthy().
+
+x represents the rcauchy(100),so we find the function just use only 1 parameter trims.
+
+  And the process of the second invocation is 
+$$x=rcauchy(100)\Longrightarrow list\left\{\begin{array}{rl}mean(x,y[1]),\\mean(x,y[2]),\\mean(x,y[3]),\\mean(x,y[4]).\end{array}\right. \Longleftarrow y=trims=\left\{\begin{array}{rl}0.1& trims[1],\\0.2&trims[2],\\0.5&trims[3],\\1&trims[4].\end{array}\right.$$
+So from the run of these two process,we can conclude the following two invocations of lapply() equivalent.
+
+\
+204.5
+\
+```{r}
+#exercise 3
+#lapply
+formulas<-list(mpg ~disp,mpg ~I(1/disp),mpg ~disp +wt,mpg ~I(1/disp) +wt)
+lapply(formulas,lm,mtcars)
+# for loop
+results<-vector(mode="list",length=length(formulas))
+for ( i in 1:length(formulas))
+{
+  results[[i]]<-lm(formulas[[i]],data=mtcars)
+  i<-i+1
+}
+results
+
+#exercise 4
+bootstraps<-lapply(1:10, function(i){
+  rows<-sample(1:nrow(mtcars),rep =TRUE)
+  mtcars[rows, ]})
+#lapply
+lapply(bootstraps,lm,mtcars)
+# for loop
+res<-vector(mode="list",length=length(bootstraps))
+for ( i in 1:length(bootstraps))
+{
+  res[[i]]<-lm(bootstraps[[i]],data=mtcars)
+  i<-i+1
+}
+rsq<-function(mod)summary(mod)$r.squared
+reg<-cbind(c(results,res))
+rsquare<-lapply(reg,rsq)
+x_html<-knitr::kable((rbind('mpg~disp[1]'=rsquare[[1]],'mpg ~I(1/disp)'=rsquare[[2]],'mpg ~disp +wt'=rsquare[[3]],'mpg ~I(1/disp) +wt'=rsquare[[4]],'mpg~disp[2]'=rsquare[[5]],'mpg~disp[3]'=rsquare[[6]],'mpg~disp[4]'=rsquare[[7]],'mpg~disp[5]'=rsquare[[8]],'mpg~disp[6]'=rsquare[[9]],'mpg~disp[7]'=rsquare[[10]],'mpg~disp[8]'=rsquare[[11]],'mpg~disp[9]'=rsquare[[12]],'mpg~disp[10]'=rsquare[[13]],'mpg~disp[11]'=rsquare[[14]])),"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+  From this part of code,we calculate the 14 kinds of R-squares of these models,4 models are given in the list formulas(),and the next 10 models is stored in the list res() after bootstrapping.we can find the R-squares of models after bootstrapping are the same which are different form the models stored in formulas.
+  
+\
+214.1
+\
+```{r}
+#(a)
+set.seed(1234)
+df<-data.frame(replicate(6,sample(c(1:10),10,rep=T)))
+sd<-function(x)#compute the standard deviation
+{
+  y<-sqrt(mean((x-mean(x))^2))
+  return(y)
+}
+round(vapply(df,sd,FUN.VALUE=0),3)
+#(b)
+name=c("zhang", "Li", "Wang", "Zhao", "Ding")
+sex=c("F", "F", "M", "M", "M")
+age=c(16, 17, 18, 16, 19)
+height=c(167.5, 156.3, 177.3, 167.5, 170.0)
+weight=c(55.0, 60.0, 63.0, 53.0, 69.5)
+mydataframe<-data.frame(name,sex,age,height,weight)
+logit<-vapply(mydataframe,is.numeric,FUN.VALUE=c(FALSE))
+index<-seq(along=logit)[logit==TRUE]
+mydataframe<-mydataframe[,index]
+round(vapply(mydataframe,sd,FUN.VALUE=0),3)
+```
+
+  From this part, in order to compute the standard deviation of every numeric column in a mixed data frame.we use the vapply()firstly and is.numeric() to get a logic list. Then use the seq() to get the index of numeric columns.In this way,we can get the numeric columns and calculate the standard deviation of every column.
+
+#2021-12-02 
+
+## Question
+
+Write an Rcpp function for Exercise9.8(page278,Statistical Computing with R).
+
+  Compare the corresponding generated random numbers with pure R language using the function "qqplot".
+  
+  Compare the computation time of the two functions with the function "microbenchmark".
+  
+  Comments your results.
+  
+## Answers
+
+This question consider the bivariate density that 
+
+$$f(x,y)\varpropto \dbinom{n}{x}y^{x+a+1}(1-y)^{n-x+b-1},x=0,1,.....n,0\leq y\leq 1.$$
+and the conditional distribution $f(x|y)$ is Binomial(n,y) and $f(y|x)$ is Beta(x+a,n-x+b).
+
+So we can conclude that $$E(X|y)=ny \quad var(X|y)=ny(1-y)$$
+
+and $$E(Y|x)=\frac{x+a}{n+a+b}\quad var(Y|x)=\frac{(x+a)(n-x+b)}{(n+a+b)^2(n+a+b+1)}$$
+
+Then we generate a chain with target joint density$f(x,y)$
+```{r}
+#pure r code
+set.seed(0)
+pure_R<-function(N,discard)#N represents length of the chain,discard represents the length of the burn.
+{
+a<-2
+b<-3
+n<-100
+x0<-30
+y0<-0.3
+sp<-matrix(0,N,2)
+sp[1,]<-c(x0,y0)
+for( i in 2:N)
+{
+  #x<-sp[i-1,2]
+  sp[i,1]<-rbinom(1,n,sp[i-1,2])
+  sp[i,2]<-rbeta(1,(sp[i,1]+a),(n-x0+b))
+  i<-i+1
+}
+return(sp)
+}
+N<-15000
+discard<-1500
+chain_R<-pure_R(N,discard)[((discard+1):N),]
+
+#Rcpp function
+library(Rcpp)
+library(microbenchmark)
+func<-'NumericMatrix chain(int N)
+{
+int a=2;
+int b=3;
+double n=100;
+double x0=30;
+double y0=0.3;
+NumericMatrix sp(N,2);
+sp(0,0)=x0;
+sp(0,1)=y0;
+for(int j=1;j<N;j++)
+{
+  sp(j,0)=rbinom(1,n,sp(j-1,1))[0];
+  sp(j,1)=rbeta(1,(sp(j,0)+a),(n-x0+b))[0];
+}
+return(sp);
+}'
+cppFunction( func )
+chain_C<-chain(N)
+chain_C<-chain_C[((discard+1):N),]
+qqplot(chain_C[,1],chain_R[,1])
+qqplot(chain_C[,2],chain_R[,2])
+ts_1<-microbenchmark(meanR=mean(pure_R(15000)),meancpp=mean(chain(15000)))
+ts_1<-summary(ts_1)[,c(1,3,5,6)]
+x_html<-knitr::kable(ts_1,"html")
+kableExtra::kable_styling(x_html,bootstrap_options = "hover",full_width = TRUE,font_size=10)
+```
+
+In this example,From the results,we set $$a=2,b=3,n=100,x_{0}=30,p=0.3$$,so the mean of B(100,0.3) and Be(32,73) is 30 and $\frac{32}{105}$, the results of Gibbs sampling of pure R code are `r mean(chain_C[,1])`, `r mean(chain_C[,2])`respectively,and the results of Gibbs sampling of RCpp function  are `r mean(chain_R[,1])`, `r mean(chain_R[,2])`respectively,which are approximately equal to the expectation of these two distributions.
+ 
+According to the qqplot, we can see the random numbers generated from pure R code and rcpp function are approximately lying on the same line.
+
+By using the function microbenchmark(), we can see the average implementing time of Rcpp function is only about 7. However, the average implementing time of pure R  function is about 84. Therefore,the speed of implementing of Rcpp function is much faster than the pure R function.
+  
+
+
+
+
